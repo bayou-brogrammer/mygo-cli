@@ -16,28 +16,28 @@ var systemCmd = &cobra.Command{
 	},
 }
 
-var (  
-	forceInstall bool
-	skipExisting bool
+var (
+	forceInstall   bool
+	skipExisting   bool
 	nonInteractive bool
 )
 
 var systemInstallCmd = &cobra.Command{
 	Use:   "install [tool name]",
 	Short: "Install development tools",
-	Long:  `Install common development tools or a specific tool.`,
+	Long:  `Install development tools from your configuration or a specific tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var toolName string
 		if len(args) > 0 {
 			toolName = args[0]
 			fmt.Printf("Installing tool: %s\n", toolName)
 		} else {
-			fmt.Println("Installing common development tools")
+			fmt.Println("Installing tools from your configuration")
 		}
 
 		// Set options based on flags
 		options := system.InstallOptions{
-			Force:       forceInstall,
+			Force:        forceInstall,
 			SkipExisting: skipExisting,
 			Verbose:      verbose,
 		}
@@ -81,7 +81,7 @@ var systemUpdateCmd = &cobra.Command{
 	Long:  `Update installed development tools.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Updating system tools")
-		
+
 		// Set options based on flags
 		options := system.UpdateOptions{
 			Verbose: verbose,

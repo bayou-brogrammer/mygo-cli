@@ -1,0 +1,21 @@
+tools:
+  - du
+  - bash
+  - bat
+  - brew
+  - cat
+  - chezmoi
+  - cp
+  - curl
+  - diff
+  - fd
+  - gh
+  - git
+  - go
+  - jq
+  - python
+  - ripgrep
+  - tmux
+  - vim
+  - wget
+  - zsh

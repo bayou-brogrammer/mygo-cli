@@ -8,6 +8,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// DefaultToolsFile defines the default list of tools
+const DefaultToolsFile = "data/default_tools.yml"
+
 // Config holds the application configuration
 type Config struct {
 	// General configuration
@@ -25,7 +28,7 @@ type Config struct {
 	ChezmoiDir string
 
 	// System configuration
-	PreferredTools []string
+	Tools []string
 }
 
 // Repository represents a tracked GitHub repository
@@ -44,14 +47,21 @@ func DefaultConfig() *Config {
 		os.Exit(1)
 	}
 
+	// Read default tools from file
+	DefaultTools, err := readDefaultTools(DefaultToolsFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading default tools: %v\n", err)
+		os.Exit(1)
+	}
+
 	return &Config{
-		ConfigDir:      filepath.Join(homeDir, ".config", "devenv"),
-		ReposDir:       filepath.Join(homeDir, "Projects"),
-		TrackedRepos:   make(map[string]Repository),
-		DotfilesRepo:   "",
-		DotfilesDir:    filepath.Join(homeDir, ".dotfiles"),
-		ChezmoiDir:     filepath.Join(homeDir, ".local", "share", "chezmoi"),
-		PreferredTools: []string{"zsh", "git", "chezmoi"},
+		ConfigDir: filepath.Join(homeDir, ".config", "devenv"),
+		// ReposDir:     filepath.Join(homeDir, "Projects"),
+		// TrackedRepos: make(map[string]Repository),
+		// DotfilesRepo: "",
+		// DotfilesDir:  filepath.Join(homeDir, ".dotfiles"),
+		// ChezmoiDir:   filepath.Join(homeDir, ".local", "share", "chezmoi"),
+		Tools: DefaultTools,
 	}
 }
 
@@ -76,9 +86,10 @@ func Init() (*Config, error) {
 	viper.AddConfigPath(cfg.ConfigDir)
 
 	// Set defaults
-	viper.SetDefault("repos_dir", cfg.ReposDir)
-	viper.SetDefault("dotfiles_dir", cfg.DotfilesDir)
-	viper.SetDefault("chezmoi_dir", cfg.ChezmoiDir)
+	// viper.SetDefault("repos_dir", cfg.ReposDir)
+	// viper.SetDefault("dotfiles_dir", cfg.DotfilesDir)
+	// viper.SetDefault("chezmoi_dir", cfg.ChezmoiDir)
+	viper.SetDefault("tools", cfg.Tools)
 
 	// Read configuration file
 	if err := viper.ReadInConfig(); err != nil {
@@ -93,11 +104,11 @@ func Init() (*Config, error) {
 	}
 
 	// Load configuration into struct
-	cfg.ReposDir = viper.GetString("repos_dir")
-	cfg.DotfilesRepo = viper.GetString("dotfiles_repo")
-	cfg.DotfilesDir = viper.GetString("dotfiles_dir")
-	cfg.ChezmoiDir = viper.GetString("chezmoi_dir")
-	cfg.PreferredTools = viper.GetStringSlice("preferred_tools")
+	// cfg.ReposDir = viper.GetString("repos_dir")
+	// cfg.DotfilesRepo = viper.GetString("dotfiles_repo")
+	// cfg.DotfilesDir = viper.GetString("dotfiles_dir")
+	// cfg.ChezmoiDir = viper.GetString("chezmoi_dir")
+	cfg.Tools = viper.GetStringSlice("tools")
 
 	// Load tracked repositories
 	reposFile := filepath.Join(cfg.ConfigDir, "repos.yaml")
@@ -119,11 +130,11 @@ func Init() (*Config, error) {
 // Save saves the current configuration
 func (c *Config) Save() error {
 	// Save main configuration
-	viper.Set("repos_dir", c.ReposDir)
-	viper.Set("dotfiles_repo", c.DotfilesRepo)
-	viper.Set("dotfiles_dir", c.DotfilesDir)
-	viper.Set("chezmoi_dir", c.ChezmoiDir)
-	viper.Set("preferred_tools", c.PreferredTools)
+	// viper.Set("repos_dir", c.ReposDir)
+	// viper.Set("dotfiles_repo", c.DotfilesRepo)
+	// viper.Set("dotfiles_dir", c.DotfilesDir)
+	// viper.Set("chezmoi_dir", c.ChezmoiDir)
+	viper.Set("tools", c.Tools)
 
 	if err := viper.WriteConfig(); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
@@ -147,4 +158,22 @@ func GetConfig() (*Config, error) {
 		return Init()
 	}
 	return cfg, nil
+}
+
+// readDefaultTools reads the default tools from a YAML file
+func readDefaultTools(filename string) ([]string, error) {
+	var tools []string
+
+	viper.SetConfigFile(filename)
+	viper.SetConfigType("yaml")
+
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("failed to read default tools file: %w", err)
+	}
+
+	if err := viper.UnmarshalKey("tools", &tools); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal default tools: %w", err)
+	}
+
+	return tools, nil
 }
