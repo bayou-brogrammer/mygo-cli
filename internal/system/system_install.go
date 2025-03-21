@@ -5,7 +5,9 @@ import (
 	"runtime"
 
 	"github.com/bayou-brogrammer/mygo/internal/config"
+	"github.com/bayou-brogrammer/mygo/internal/logger"
 	"github.com/bayou-brogrammer/mygo/internal/shell"
+	"github.com/bayou-brogrammer/mygo/internal/ui"
 )
 
 // Package managers by platform
@@ -39,23 +41,28 @@ func InstallWithOptions(tool string, options InstallOptions) error {
 	// Get package manager for current platform
 	pkgManager, ok := packageManagers[runtime.GOOS]
 	if !ok {
+		logger.Error("Unsupported platform: %s - only darwin (macOS) and linux are supported", runtime.GOOS)
 		return fmt.Errorf("unsupported platform: %s - only darwin (macOS) and linux are supported", runtime.GOOS)
 	}
 
 	// Check if package manager is installed
 	if !shell.CommandExists(pkgManager) {
+		var errMsg error
 		switch pkgManager {
 		case "brew":
-			return fmt.Errorf("%s is not installed, please install Homebrew first: https://brew.sh", pkgManager)
+			errMsg = fmt.Errorf("%s is not installed, please install Homebrew first: https://brew.sh", pkgManager)
 		case "apt":
-			return fmt.Errorf("%s is not installed, please install apt-get first", pkgManager)
+			errMsg = fmt.Errorf("%s is not installed, please install apt-get first", pkgManager)
 		default:
-			return fmt.Errorf("%s is not installed, please install it first", pkgManager)
+			errMsg = fmt.Errorf("%s is not installed, please install it first", pkgManager)
 		}
+
+		return errMsg
 	}
 
 	if tool != "" {
 		// Install specific tool
+		ui.PrintInfo("Installing tool: %s", tool)
 		InstallWithPackageManagers(tool, pkgManager, options)
 	} else {
 		// Get the configuration to access preferred tools
@@ -65,45 +72,93 @@ func InstallWithOptions(tool string, options InstallOptions) error {
 		}
 
 		// Run install over config tools
+		ui.PrintTitle("Installing Tools from Configuration")
+
 		for _, tool := range cfg.Tools {
-			InstallWithPackageManagers(tool, pkgManager, options)
+			err := InstallWithPackageManagers(tool, pkgManager, options)
+			if err != nil {
+				return err
+			}
 		}
+
+		ui.PrintSuccess("Finished installing all tools from configuration")
 	}
 
 	return nil
 }
 
-func InstallWithPackageManagers(tool string, pkgManager string, options InstallOptions) {
+func InstallWithPackageManagers(tool string, pkgManager string, options InstallOptions) error {
+	// Format the tool name with accent color for better visibility
+	highlightedTool := ui.FormatTextWithColor(tool, &ui.StyleCommand, ui.ColorInfo)
+
 	// Check if tool is already installed and should be skipped
 	if shell.CommandExists(tool) && options.SkipExisting && !options.Force {
-		fmt.Printf("%s is already installed, skipping\n", tool)
-		return
+		ui.PrintInfo("%s is already installed, skipping", highlightedTool)
+		return nil
 	}
 
-	fmt.Printf("Installing %s...\n", tool)
+	ui.PrintCommand("Installing %s", highlightedTool)
 
 	var result *shell.Result
 	var err error
 
+	// Display the command being executed with proper formatting
 	switch pkgManager {
 	case "brew":
 		if options.Force {
+			// Show the command with nice formatting
+			ui.PrintInfo("Running: %s %s %s",
+				ui.FormatCommand("brew"),
+				ui.FormatValue("reinstall"),
+				highlightedTool)
 			result, err = shell.Execute("brew", "reinstall", tool)
 		} else {
+			// Show the command with nice formatting
+			ui.PrintInfo("Running: %s %s %s",
+				ui.FormatCommand("brew"),
+				ui.FormatValue("install"),
+				highlightedTool)
 			result, err = shell.Execute("brew", "install", tool)
 		}
 	case "apt":
 		if options.Force {
+			// Show the command with nice formatting
+			ui.PrintInfo("Running: %s %s %s %s %s %s",
+				ui.FormatCommand("sudo"),
+				ui.FormatCommand("apt"),
+				ui.FormatValue("install"),
+				ui.FormatValue("--reinstall"),
+				ui.FormatValue("-y"),
+				highlightedTool)
 			result, err = shell.Execute("sudo", "apt", "install", "--reinstall", "-y", tool)
 		} else {
+			// Show the command with nice formatting
+			ui.PrintInfo("Running: %s %s %s %s %s",
+				ui.FormatCommand("sudo"),
+				ui.FormatCommand("apt"),
+				ui.FormatValue("install"),
+				ui.FormatValue("-y"),
+				highlightedTool)
 			result, err = shell.Execute("sudo", "apt", "install", "-y", tool)
 		}
 	}
 
 	if err != nil {
-		fmt.Printf("Failed to install %s: %v\n", tool, err)
-		return
+		return fmt.Errorf("failed to install %s: %v", tool, err)
 	}
 
-	shell.PrintResult(result, options.Verbose)
+	// Print success message
+	ui.PrintSuccess("Successfully installed %s", highlightedTool)
+
+	// Print detailed output if verbose
+	if options.Verbose {
+		if result.Stdout != "" {
+			ui.PrintBox(fmt.Sprintf("Output:\n%s", result.Stdout))
+		}
+		if result.Stderr != "" {
+			ui.PrintErrorBox(fmt.Sprintf("Errors:\n%s", result.Stderr))
+		}
+	}
+
+	return nil
 }

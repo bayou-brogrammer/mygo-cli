@@ -1,4 +1,4 @@
-# DevEnv CLI
+# Milo CLI
 
 A command-line tool for managing development environment setup, including GitHub repositories, dotfiles, and system configuration via chezmoi.
 
@@ -13,35 +13,38 @@ A command-line tool for managing development environment setup, including GitHub
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/devenv-cli.git
+git clone https://github.com/yourusername/milo-cli.git
 
 # Build the binary
-cd devenv-cli
-go build -o devenv
+cd milo
+go build -o milo
 
 # Move to a directory in your PATH
-mv devenv /usr/local/bin/
+mv milo /usr/local/bin/
 ```
 
 ## Usage
 
 ```bash
 # Initialize dotfiles
-devenv dots init
+milo dots init
 
 # Clone a repository
-devenv repo clone https://github.com/username/repo.git
+milo repo clone https://github.com/username/repo.git
 
 # Apply chezmoi configuration
-devenv chezmoi apply
+milo chezmoi apply
+
+# List repositories
+milo repo list
 
 # Install development tools
-devenv system install
+milo system install
 ```
 
 ## Configuration
 
-Configuration is stored in `~/.config/devenv/config.yaml`. You can edit this file directly or use the CLI to update settings.
+Configuration is stored in `~/.config/milo/config.yaml`. You can edit this file directly or use the CLI to update settings.
 
 ## Development
 

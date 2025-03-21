@@ -55,7 +55,7 @@ func DefaultConfig() *Config {
 	}
 
 	return &Config{
-		ConfigDir: filepath.Join(homeDir, ".config", "devenv"),
+		ConfigDir: filepath.Join(homeDir, ".config", "milo"),
 		// ReposDir:     filepath.Join(homeDir, "Projects"),
 		// TrackedRepos: make(map[string]Repository),
 		// DotfilesRepo: "",

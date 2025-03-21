@@ -1,7 +1,7 @@
 .PHONY: build install test clean
 
 # Binary name
-BINARY_NAME=devenv
+BINARY_NAME=milo
 
 # Go parameters
 GOCMD=go
@@ -15,7 +15,7 @@ BUILD_FLAGS=-v
 LDFLAGS=-ldflags "-w -s"
 
 # Directories
-CMD_DIR=./cmd/devenv
+CMD_DIR=./cmd/milo
 BUILD_DIR=./build
 
 all: test build
@@ -25,7 +25,7 @@ build:
 	$(GOBUILD) $(BUILD_FLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(CMD_DIR)
 
 install: build
-	cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/
+	cp $(BUILD_DIR)/$(BINARY_NAME) ~/.local/bin/
 
 test:
 	$(GOTEST) -v ./...

@@ -5,26 +5,37 @@ import (
 	"os"
 
 	"github.com/bayou-brogrammer/mygo/internal/config"
+	"github.com/bayou-brogrammer/mygo/internal/logger"
+	"github.com/bayou-brogrammer/mygo/internal/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile string
-	verbose bool
+	cfgFile  string
+	verbose  bool
+	logLevel string
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "devenv",
+	Use:   "milo",
 	Short: "A CLI tool for managing development environment",
-	Long: `DevEnv CLI is a comprehensive tool for managing your development environment,
+	Long: `Milo CLI is a comprehensive tool for managing your development environment,
 including GitHub repositories, dotfiles, and system configuration via chezmoi.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Initialize logger with appropriate level
+		loggerLevel := logger.ParseLevel(logLevel)
+		if verbose {
+			loggerLevel = logger.LevelDebug
+		}
+
+		logger.Init(loggerLevel)
+		logger.Debug("Logger initialized with level: %s", loggerLevel)
+
 		// Initialize configuration
 		_, err := config.Init()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error initializing config: %v\n", err)
-			os.Exit(1)
+			logger.Fatal("Error initializing config: %v", err)
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -38,8 +49,9 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/devenv/config.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/milo/config.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "set log level (debug, info, warn, error, fatal)")
 
 	// Register commands - these are defined in their respective files
 	// and will be automatically registered when those files are imported
@@ -49,7 +61,7 @@ func init() {
 		Use:   "version",
 		Short: "Print the version number",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("DevEnv CLI v0.1.0")
+			ui.PrintInfo("Milo CLI v0.1.0")
 		},
 	})
 }
@@ -66,8 +78,8 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".devenv" (without extension)
-		viper.AddConfigPath(fmt.Sprintf("%s/.config/devenv", home))
+		// Search config in home directory with name ".milo" (without extension)
+		viper.AddConfigPath(fmt.Sprintf("%s/.config/milo", home))
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
 	}
@@ -82,6 +94,9 @@ func initConfig() {
 }
 
 func main() {
+	// Ensure logger is closed when program exits
+	defer logger.Close()
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

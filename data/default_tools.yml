@@ -14,7 +14,7 @@ tools:
   - go
   - jq
   - python
-  - ripgrep
+  - rg
   - tmux
   - vim
   - wget

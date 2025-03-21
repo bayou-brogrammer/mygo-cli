@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bayou-brogrammer/mygo/internal/system"
+	"github.com/bayou-brogrammer/mygo/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -30,9 +31,6 @@ var systemInstallCmd = &cobra.Command{
 		var toolName string
 		if len(args) > 0 {
 			toolName = args[0]
-			fmt.Printf("Installing tool: %s\n", toolName)
-		} else {
-			fmt.Println("Installing tools from your configuration")
 		}
 
 		// Set options based on flags
@@ -44,7 +42,7 @@ var systemInstallCmd = &cobra.Command{
 
 		err := system.InstallWithOptions(toolName, options)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			ui.PrintError("%v", err)
 		}
 	},
 }
@@ -57,9 +55,6 @@ var systemConfigureCmd = &cobra.Command{
 		var component string
 		if len(args) > 0 {
 			component = args[0]
-			fmt.Printf("Configuring system component: %s\n", component)
-		} else {
-			fmt.Println("Configuring system preferences")
 		}
 
 		// Set options based on flags
@@ -80,8 +75,6 @@ var systemUpdateCmd = &cobra.Command{
 	Short: "Update system tools",
 	Long:  `Update installed development tools.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Updating system tools")
-
 		// Set options based on flags
 		options := system.UpdateOptions{
 			Verbose: verbose,

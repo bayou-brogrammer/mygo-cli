@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bayou-brogrammer/mygo/internal/logger"
 	"github.com/bayou-brogrammer/mygo/internal/shell"
+	"github.com/bayou-brogrammer/mygo/internal/ui"
 )
 
 // ConfigureOptions defines options for system configuration
@@ -27,25 +29,44 @@ func Configure(component string) error {
 
 // ConfigureWithOptions configures system preferences with options
 func ConfigureWithOptions(component string, options ConfigureOptions) error {
+	ui.PrintTitle("System Configuration")
+
 	if component != "" {
 		// Configure specific component
+		ui.PrintSubtitle(fmt.Sprintf("Configuring %s", component))
+
 		switch component {
 		case "git":
 			return configureGit(options)
 		case "shell":
 			return configureShell(options)
 		default:
-			return fmt.Errorf("unknown component: %s", component)
+			errMsg := fmt.Sprintf("Unknown component: %s", component)
+
+			logger.Error("%s", errMsg)
+			ui.PrintError("%s", errMsg)
+
+			return fmt.Errorf("%s", errMsg)
 		}
 	} else {
 		// Configure all components
+		ui.PrintInfo("Configuring all components...")
+
+		ui.PrintSubtitle("Configuring Git")
 		if err := configureGit(options); err != nil {
-			fmt.Printf("Failed to configure git: %v\n", err)
+			errMsg := fmt.Sprintf("Failed to configure git: %v", err)
+			logger.Error("%s", errMsg)
+			ui.PrintError("%s", errMsg)
 		}
 
+		ui.PrintSubtitle("Configuring Shell")
 		if err := configureShell(options); err != nil {
-			fmt.Printf("Failed to configure shell: %v\n", err)
+			errMsg := fmt.Sprintf("Failed to configure shell: %v", err)
+			logger.Error("%s", errMsg)
+			ui.PrintError("%s", errMsg)
 		}
+
+		ui.PrintSuccess("System configuration completed")
 	}
 
 	return nil
@@ -113,7 +134,6 @@ func configureGit(options ConfigureOptions) error {
 		shell.PrintResult(result, false)
 	}
 
-	fmt.Println("Git configured successfully")
 	return nil
 }
 
@@ -133,7 +153,6 @@ func configureShell(options ConfigureOptions) error {
 	ohmyzshDir := filepath.Join(homeDir, ".oh-my-zsh")
 	if _, err := os.Stat(ohmyzshDir); os.IsNotExist(err) {
 		// Install Oh My Zsh
-		fmt.Println("Installing Oh My Zsh...")
 		result, err := shell.Execute("sh", "-c", "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)")
 		if err != nil {
 			return fmt.Errorf("failed to install Oh My Zsh: %w", err)
@@ -141,6 +160,5 @@ func configureShell(options ConfigureOptions) error {
 		shell.PrintResult(result, options.Verbose)
 	}
 
-	fmt.Println("Shell configured successfully")
 	return nil
 }

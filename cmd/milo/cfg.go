@@ -12,7 +12,7 @@ import (
 var cfgCmd = &cobra.Command{
 	Use:   "cfg",
 	Short: "Manage configuration",
-	Long:  `Commands for managing devenv configuration files.`,
+	Long:  `Commands for managing milo configuration files.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
